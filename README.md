@@ -13,3 +13,6 @@ This project uses Python ≥ 3.6, `Flask`, `Zalando Flair` and `dkpro-cassis`. I
 After everything has been set up, the recommender then can be started from the command line by calling
 
     python app_flair.py
+
+## Tagset
+ `flair_ner.json` contains name entity tags and `flair_pos.json` contains pos-of-speech tags. When you annotate your text with Flair external recommender, you need first import the two tagset files into your project in INCEpTION as "Settings -> Tagsets -> Choose FIles -> Format : JSON -> Submit".

@@ -1,0 +1,158 @@
+{
+  "name" : "Flair POS tags",
+  "typeUiName" : null,
+  "description" : "source from https://chameleonmetadata.com/Education/NLP-3/ref_nlp_nlp4j_pos_tags_list.php",
+  "language" : "en",
+  "type" : null,
+  "type_name" : null,
+  "type_description" : null,
+  "tags" : [ {
+    "tag_name" : "$",
+    "tag_description" : "dollar"
+  }, {
+    "tag_name" : "''",
+    "tag_description" : "right quote"
+  }, {
+    "tag_name" : ",",
+    "tag_description" : "comma"
+  }, {
+    "tag_name" : "-LRB-",
+    "tag_description" : "left bracket"
+  }, {
+    "tag_name" : "-RRB-",
+    "tag_description" : "right bracket"
+  }, {
+    "tag_name" : ".",
+    "tag_description" : "period"
+  }, {
+    "tag_name" : ":",
+    "tag_description" : "colon"
+  }, {
+    "tag_name" : "ADD",
+    "tag_description" : "email"
+  }, {
+    "tag_name" : "AFX",
+    "tag_description" : "affix"
+  }, {
+    "tag_name" : "CC",
+    "tag_description" : "coordinating conjunction"
+  }, {
+    "tag_name" : "CD",
+    "tag_description" : "cardinal number"
+  }, {
+    "tag_name" : "DT",
+    "tag_description" : "determiner"
+  }, {
+    "tag_name" : "EX",
+    "tag_description" : "existential there"
+  }, {
+    "tag_name" : "FW",
+    "tag_description" : "foreign word"
+  }, {
+    "tag_name" : "HYPH",
+    "tag_description" : "hyphen"
+  }, {
+    "tag_name" : "IN",
+    "tag_description" : "preposition or subordinating conjunction"
+  }, {
+    "tag_name" : "JJ",
+    "tag_description" : "adjective"
+  }, {
+    "tag_name" : "JJR",
+    "tag_description" : "adjective, comparative"
+  }, {
+    "tag_name" : "JJS",
+    "tag_description" : "adjective, superlative"
+  }, {
+    "tag_name" : "LS",
+    "tag_description" : "list item marker"
+  }, {
+    "tag_name" : "MD",
+    "tag_description" : "modal"
+  }, {
+    "tag_name" : "NFP",
+    "tag_description" : "superfluous punctuation"
+  }, {
+    "tag_name" : "NN",
+    "tag_description" : "noun, singular or mass"
+  }, {
+    "tag_name" : "NNP",
+    "tag_description" : "proper noun, singular"
+  }, {
+    "tag_name" : "NNPS",
+    "tag_description" : "proper noun, plural"
+  }, {
+    "tag_name" : "NNS",
+    "tag_description" : "noun, plural"
+  }, {
+    "tag_name" : "PDT",
+    "tag_description" : "predeterminer"
+  }, {
+    "tag_name" : "POS",
+    "tag_description" : "possessive ending"
+  }, {
+    "tag_name" : "PRP",
+    "tag_description" : "personal pronoun"
+  }, {
+    "tag_name" : "PRP$",
+    "tag_description" : "possessive pronoun"
+  }, {
+    "tag_name" : "RB",
+    "tag_description" : "adverb"
+  }, {
+    "tag_name" : "RBR",
+    "tag_description" : "adverb, comparative"
+  }, {
+    "tag_name" : "RBS",
+    "tag_description" : "adverb, superlative"
+  }, {
+    "tag_name" : "RP",
+    "tag_description" : "particle"
+  }, {
+    "tag_name" : "SYM",
+    "tag_description" : "symbol"
+  }, {
+    "tag_name" : "TO",
+    "tag_description" : "to"
+  }, {
+    "tag_name" : "UH",
+    "tag_description" : "interjection"
+  }, {
+    "tag_name" : "VB",
+    "tag_description" : "verb, base form"
+  }, {
+    "tag_name" : "VBD",
+    "tag_description" : "verb, past tense"
+  }, {
+    "tag_name" : "VBG",
+    "tag_description" : "verb, gerund or present participle"
+  }, {
+    "tag_name" : "VBN",
+    "tag_description" : "verb, past participle"
+  }, {
+    "tag_name" : "VBP",
+    "tag_description" : "verb, non-3rd person singular present"
+  }, {
+    "tag_name" : "VBZ",
+    "tag_description" : "verb, 3rd person singular present"
+  }, {
+    "tag_name" : "WDT",
+    "tag_description" : "wh-determiner"
+  }, {
+    "tag_name" : "WP",
+    "tag_description" : "wh-pronoun"
+  }, {
+    "tag_name" : "WP$",
+    "tag_description" : "wh-pronoun, possessive"
+  }, {
+    "tag_name" : "WRB",
+    "tag_description" : "wh-adverb"
+  }, {
+    "tag_name" : "XX",
+    "tag_description" : "unknown"
+  }, {
+    "tag_name" : "``",
+    "tag_description" : "left quote"
+  } ],
+  "create_tag" : false
+}

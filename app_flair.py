@@ -10,6 +10,8 @@ from flair.data import Token,Sentence
 
 from flair.models import SequenceTagger
 
+import argparse
+
 # Types
 
 JsonDict = Dict[str, Any]
@@ -26,10 +28,16 @@ IS_PREDICTION = "inception_internal_predicted"
 
 # Models
 
-#model_name = sys.argv[1] if len(sys.argv) >= 2 else 'en'
-#nlp = spacy.load(model_name, disable=['parser'])
-tagger: SequenceTagger = SequenceTagger.load('ner')
-tagger_pos: SequenceTagger = SequenceTagger.load('pos')
+parser = argparse.ArgumentParser(usage="choose ner and pos models", description="help info.")
+
+parser.add_argument("--ner", choices=['ner', 'ner-ontonotes', 'ner-fast', 'ner-ontonotes-fast'],
+                    default="ner",help="choose ner model")
+parser.add_argument("--pos", choices=['pos', 'pos-fast'], default="pos", help="choose pos model")
+
+args = parser.parse_args()
+
+tagger: SequenceTagger = SequenceTagger.load(args.ner)
+tagger_pos: SequenceTagger = SequenceTagger.load(args.pos)
 
 # Routes
 

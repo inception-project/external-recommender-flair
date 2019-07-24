@@ -128,6 +128,7 @@ def predict_ner(prediction_request: PredictionRequest) -> PredictionResponse:
             fields = {'begin': tokens_cas[start_idx].begin,
                       'end': tokens_cas[end_idx].end,
                       IS_PREDICTION: True,
+                      prediction_request.feature+"_score": ent.score,
                       prediction_request.feature: ent.tag}
             annotation = AnnotationType(**fields)
             cas.add_annotation(annotation)
@@ -166,6 +167,7 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
                 fields = {'begin': tokens_cas[token.idx].begin,
                           'end': tokens_cas[token.idx].end,
                           IS_PREDICTION: True,
+                          prediction_request.feature+"_score": t.score,
                           prediction_request.feature: t.value}
                 annotation = AnnotationType(**fields)
                 cas.add_annotation(annotation)

@@ -12,15 +12,7 @@ from flair.models import SequenceTagger
 
 import argparse
 
-import logging
-
-import gunicorn.app.base
-
-from gunicorn.six import iteritems
-
-import time
-
-from multiprocessing import Lock
+import os
 
 # Types
 
@@ -36,29 +28,11 @@ SENTENCE_TYPE = "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"
 TOKEN_TYPE = "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token"
 IS_PREDICTION = "inception_internal_predicted"
 
-# Locks
-lock_ner_train = Lock()
-lock_pos_train = Lock()
-
 # Models
 
-parser = argparse.ArgumentParser(usage="choose ner and pos models", description="help info.")
+global tagger_ner
 
-parser.add_argument("--ner", choices=['ner', 'ner-ontonotes', 'ner-fast', 'ner-ontonotes-fast'],
-                    default="ner", help="choose ner model")
-parser.add_argument("--pos", choices=['pos', 'pos-fast'], default="pos", help="choose pos model")
-
-parser.add_argument("--workers", default=1)
-
-parser.add_argument("--threads", default=1)
-
-args = parser.parse_args()
-
-log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-tagger: SequenceTagger = SequenceTagger.load(args.ner)
-tagger_pos: SequenceTagger = SequenceTagger.load(args.pos)
+global tagger_pos
 
 # Routes
 
@@ -69,10 +43,8 @@ app = Flask(__name__)
 def route_predict_ner():
     json_data = request.get_json()
 
-    logging.warning('ner prediction starts')
     prediction_request = parse_prediction_request(json_data)
     prediction_response = predict_ner(prediction_request)
-    logging.warning('ner prediction ends')
 
     result = jsonify(document=prediction_response.document)
 
@@ -81,27 +53,16 @@ def route_predict_ner():
 
 @app.route("/ner/train", methods=["POST"])
 def route_train_ner():
-    if (lock_ner_train.acquire(block=False)):
-        # Return empty response
-        try:
-            logging.warning('ner train starts')
-            time.sleep(15)
-            logging.warning('ner train ends')
-        finally:
-            lock_ner_train.release()
-            return ('', 204)
-    else:
-        return ('', 429)
+    # Return empty response
+    return ('', 204)
 
 
 @app.route("/pos/predict", methods=["POST"])
 def route_predict_pos():
     json_data = request.get_json()
 
-    logging.warning('pos prediction starts')
     prediction_request = parse_prediction_request(json_data)
     prediction_response = predict_pos(prediction_request)
-    logging.warning('pos prediction ends')
 
     result = jsonify(document=prediction_response.document)
 
@@ -110,17 +71,8 @@ def route_predict_pos():
 
 @app.route("/pos/train", methods=["POST"])
 def route_train_pos():
-    if (lock_pos_train.acquire(block=False)):
-        # Return empty response
-        try:
-            logging.warning('pos train starts')
-            time.sleep(15)
-            logging.warning('pos train ends')
-        finally:
-            lock_pos_train.release()
-            return ('', 204)
-    else:
-        return ('', 429)
+    # Return empty response
+    return ('', 204)
 
 
 def parse_prediction_request(json_object: JsonDict) -> PredictionRequest:
@@ -160,7 +112,7 @@ def predict_ner(prediction_request: PredictionRequest) -> PredictionResponse:
         s = Sentence()
         s.tokens = tokens
         text.append(s)
-    tagger.predict(text)
+    tagger_ner.predict(text)
 
     # Find the named entities
     for sen in text:
@@ -216,34 +168,20 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
     xmi = cas.to_xmi()
     return PredictionResponse(xmi)
 
-
-class StandaloneApplication(gunicorn.app.base.BaseApplication):
-
-    def __init__(self, app, options=None):
-        self.options = options or {}
-        self.application = app
-        super(StandaloneApplication, self).__init__()
-
-    def load_config(self):
-        config = dict([(key, value) for key, value in iteritems(self.options)
-                       if key in self.cfg.settings and value is not None])
-        for key, value in iteritems(config):
-            self.cfg.set(key.lower(), value)
-
-    def load(self):
-        return self.application
-
-
 if __name__ == "__main__":
-    ##app.run(debug=True, host='0.0.0.0')
-    # app.run(host='0.0.0.0')
+    parser = argparse.ArgumentParser(usage="choose ner and pos models", description="help info.")
 
-    options = {
-        'bind': '%s:%s' % ('0.0.0.0', '5000'),
-        'workers': args.workers,
-        'threads': args.threads,
-    }
-    StandaloneApplication(app, options).run()
+    parser.add_argument("--ner", choices=['ner', 'ner-ontonotes', 'ner-fast', 'ner-ontonotes-fast'],
+                        default="ner",help="choose ner model")
+    parser.add_argument("--pos", choices=['pos', 'pos-fast'], default="pos", help="choose pos model")
+
+    args = parser.parse_args()
+
+    tagger_ner = SequenceTagger.load(args.ner)
+
+    tagger_pos= SequenceTagger.load(args.pos)
+
+    app.run(debug=True, host='0.0.0.0')
     """
 
     # For debugging purposes, load a json file containing the request and process it.
@@ -254,3 +192,7 @@ if __name__ == "__main__":
     request = parse_prediction_request(predict_json)
     predict_pos(request)
     """
+else:
+    tagger_ner = SequenceTagger.load(os.getenv('ner_model'))
+
+    tagger_pos = SequenceTagger.load(os.getenv('pos_model'))

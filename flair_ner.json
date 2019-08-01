@@ -1,59 +1,23 @@
 {
   "name" : "Flair NER",
   "typeUiName" : null,
-  "description" : null,
+  "description" : "Named Entity annotation\r\nTraining dataset: Conll-03",
   "language" : "en",
   "type" : null,
   "type_name" : null,
   "type_description" : null,
   "tags" : [ {
-    "tag_name" : "B-LOC",
-    "tag_description" : "Beginning of a multiword location name"
+    "tag_name" : "LOC",
+    "tag_description" : "locations"
   }, {
-    "tag_name" : "B-MISC",
-    "tag_description" : "Beginning of a multiword miscellaneous name"
+    "tag_name" : "MISC",
+    "tag_description" : "miscellaneous names"
   }, {
-    "tag_name" : "B-ORG",
-    "tag_description" : "Beginning of a multiword organization name"
+    "tag_name" : "ORG",
+    "tag_description" : "organizations"
   }, {
-    "tag_name" : "B-PER",
-    "tag_description" : "Beginning of a multiword person name"
-  }, {
-    "tag_name" : "E-LOC",
-    "tag_description" : "the End of a multiword location name"
-  }, {
-    "tag_name" : "E-MISC",
-    "tag_description" : "the End of a multiword miscellaneous name"
-  }, {
-    "tag_name" : "E-ORG",
-    "tag_description" : "the End of a multiword organization name"
-  }, {
-    "tag_name" : "E-PER",
-    "tag_description" : "the End of a multiword person name"
-  }, {
-    "tag_name" : "I-LOC",
-    "tag_description" : "Internal of a multiword location name"
-  }, {
-    "tag_name" : "I-MISC",
-    "tag_description" : "Internal of a multiword miscellaneous name"
-  }, {
-    "tag_name" : "I-ORG",
-    "tag_description" : "Internal of a multiword organization name"
-  }, {
-    "tag_name" : "I-PER",
-    "tag_description" : "Internal of a multiword person name"
-  }, {
-    "tag_name" : "S-LOC",
-    "tag_description" : "Single word location name"
-  }, {
-    "tag_name" : "S-MISC",
-    "tag_description" : "Single word miscellaneous name"
-  }, {
-    "tag_name" : "S-ORG",
-    "tag_description" : "Single word organization name"
-  }, {
-    "tag_name" : "S-PER",
-    "tag_description" : "Single word person name"
+    "tag_name" : "PER",
+    "tag_description" : "persons"
   } ],
   "create_tag" : false
 }

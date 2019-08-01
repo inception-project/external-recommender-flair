@@ -1,0 +1,65 @@
+{
+  "name" : "Flair NER ontonotes",
+  "typeUiName" : null,
+  "description" : "Named Entity annotation\r\nTraining dataset: Ontonotes",
+  "language" : "en",
+  "type" : null,
+  "type_name" : null,
+  "type_description" : null,
+  "tags" : [ {
+    "tag_name" : "CARDINAL",
+    "tag_description" : "Numerals that do not fall under another type"
+  }, {
+    "tag_name" : "DATE",
+    "tag_description" : "Absolute or relative dates or periods"
+  }, {
+    "tag_name" : "EVENT",
+    "tag_description" : "Named hurricanes, battles, wars, sports events, etc."
+  }, {
+    "tag_name" : "FAC",
+    "tag_description" : "Buildings, airports, highways, bridges, etc."
+  }, {
+    "tag_name" : "GPE",
+    "tag_description" : "Countries, cities, states"
+  }, {
+    "tag_name" : "LANGUAGE",
+    "tag_description" : "Any named language"
+  }, {
+    "tag_name" : "LAW",
+    "tag_description" : "Named documents made into laws"
+  }, {
+    "tag_name" : "LOC",
+    "tag_description" : "Non-GPE locations, mountain ranges, bodies of water"
+  }, {
+    "tag_name" : "MONEY",
+    "tag_description" : "Monetary values, including unit"
+  }, {
+    "tag_name" : "NORP",
+    "tag_description" : "Nationalities or religious or political groups"
+  }, {
+    "tag_name" : "ORDINAL",
+    "tag_description" : "“first”, “second”"
+  }, {
+    "tag_name" : "ORG",
+    "tag_description" : "Companies, agencies, institutions, etc."
+  }, {
+    "tag_name" : "PERCENT",
+    "tag_description" : "Percentage (including “%”)"
+  }, {
+    "tag_name" : "PERSON",
+    "tag_description" : "People, including fictional"
+  }, {
+    "tag_name" : "PRODUCT",
+    "tag_description" : "Vehicles, weapons, foods, etc. (Not services)"
+  }, {
+    "tag_name" : "QUANTITY",
+    "tag_description" : "Measurements, as of weight or distance"
+  }, {
+    "tag_name" : "TIME",
+    "tag_description" : "Times smaller than a day"
+  }, {
+    "tag_name" : "WORK_OF_ART",
+    "tag_description" : "Titles of books, songs, etc."
+  } ],
+  "create_tag" : false
+}

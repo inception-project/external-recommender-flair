@@ -9,7 +9,19 @@ This project uses Python ≥ 3.6, `Flask`, `Zalando Flair` and `dkpro-cassis`. I
     pip install flask
     pip install flair
 
+When the recommender is deployed on a Gunicorn server:
+
+    pip install gunicorn
+
 ## Usage
 After everything has been set up, the recommender then can be started from the command line by calling
 
-    python app_flair.py
+    python app_flair.py --pos ${POS_MODEL_NAME} --ner ${NER_MODEL_NAME}
+
+where ${POS_MODEL_NAME} is the name for the POS-tagging model and ${NER_MODEL_NAME} is the name of NER model. A list of pretrained models can be found on the [flair page](https://github.com/zalandoresearch/flair/blob/master/resources/docs/TUTORIAL_2_TAGGING.md).
+
+When used in production, the recommender can be deployed on an actual application server Gunicorn by calling:
+
+    gunicorn app_flair:app -c gunicorn.conf
+
+where gunicorn.conf is the config file. More information about the configuration of Gunicorn can be found on the [Gunicorn page](http://docs.gunicorn.org/en/stable/settings.html#config-file).

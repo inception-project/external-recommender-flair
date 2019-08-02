@@ -15,4 +15,4 @@ After everything has been set up, the recommender then can be started from the c
     python app_flair.py
 
 ## Tagset
- `flair_ner.json` contains name entity tags and `flair_pos.json` contains pos-of-speech tags. When you annotate your text with Flair external recommender, you need first import the two tagset files into your project in INCEpTION as "Settings -> Tagsets -> Choose FIles -> Format : JSON -> Submit".
+ `flair_ner.json` contains 4-class name entity tags from Conll-03, `flair_ner_ontonotes.json` contains 12-class name entity tags from Ontonotes and `flair_pos.json` contains pos-of-speech tags from Ontonotes. When you annotate your text with Flair external recommender, you need first import the tagset files into your project in INCEpTION as "Settings -> Tagsets -> Choose Files -> Format : JSON -> Submit".

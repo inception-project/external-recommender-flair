@@ -1,0 +1,23 @@
+{
+  "name" : "Flair NER",
+  "typeUiName" : null,
+  "description" : "Named Entity annotation\r\nTraining dataset: Conll-03",
+  "language" : "en",
+  "type" : null,
+  "type_name" : null,
+  "type_description" : null,
+  "tags" : [ {
+    "tag_name" : "LOC",
+    "tag_description" : "locations"
+  }, {
+    "tag_name" : "MISC",
+    "tag_description" : "miscellaneous names"
+  }, {
+    "tag_name" : "ORG",
+    "tag_description" : "organizations"
+  }, {
+    "tag_name" : "PER",
+    "tag_description" : "persons"
+  } ],
+  "create_tag" : false
+}

@@ -6,9 +6,13 @@ from flask import Flask, request, jsonify
 
 from cassis import *
 
-from flair.data import Token,Sentence
+from flair.data import Token, Sentence
 
 from flair.models import SequenceTagger
+
+import argparse
+
+import os
 
 # Types
 
@@ -26,10 +30,9 @@ IS_PREDICTION = "inception_internal_predicted"
 
 # Models
 
-#model_name = sys.argv[1] if len(sys.argv) >= 2 else 'en'
-#nlp = spacy.load(model_name, disable=['parser'])
-tagger: SequenceTagger = SequenceTagger.load('ner')
-tagger_pos: SequenceTagger = SequenceTagger.load('pos')
+global tagger_ner
+
+global tagger_pos
 
 # Routes
 
@@ -102,24 +105,25 @@ def predict_ner(prediction_request: PredictionRequest) -> PredictionResponse:
     text = []
     idx = 0
     for sentence in sentences:
-        tokens = [Token(cas.get_covered_text(t)) for t in list(cas.select_covered(TOKEN_TYPE,sentence))]
+        tokens = [Token(cas.get_covered_text(t)) for t in list(cas.select_covered(TOKEN_TYPE, sentence))]
         for token in tokens:
             token.idx = idx
-            idx+=1
+            idx += 1
         s = Sentence()
         s.tokens = tokens
         text.append(s)
-    tagger.predict(text)
+    tagger_ner.predict(text)
 
     # Find the named entities
     for sen in text:
         for ent in sen.get_spans('ner'):
             start_idx = ent.tokens[0].idx
 
-            end_idx = start_idx + len(ent.tokens) -1
+            end_idx = start_idx + len(ent.tokens) - 1
             fields = {'begin': tokens_cas[start_idx].begin,
                       'end': tokens_cas[end_idx].end,
                       IS_PREDICTION: True,
+                      prediction_request.feature+"_score": ent.score,
                       prediction_request.feature: ent.tag}
             annotation = AnnotationType(**fields)
             cas.add_annotation(annotation)
@@ -140,10 +144,10 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
     text = []
     idx = 0
     for sentence in sentences:
-        tokens = [Token(cas.get_covered_text(t)) for t in list(cas.select_covered(TOKEN_TYPE,sentence))]
+        tokens = [Token(cas.get_covered_text(t)) for t in list(cas.select_covered(TOKEN_TYPE, sentence))]
         for token in tokens:
             token.idx = idx
-            idx+=1
+            idx += 1
         s = Sentence()
         s.tokens = tokens
         text.append(s)
@@ -158,6 +162,7 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
                 fields = {'begin': tokens_cas[token.idx].begin,
                           'end': tokens_cas[token.idx].end,
                           IS_PREDICTION: True,
+                          prediction_request.feature+"_score": t.score,
                           prediction_request.feature: t.value}
                 annotation = AnnotationType(**fields)
                 cas.add_annotation(annotation)
@@ -165,10 +170,22 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
     xmi = cas.to_xmi()
     return PredictionResponse(xmi)
 
-
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(usage="choose ner and pos models", description="help info.")
+
+    parser.add_argument("--ner", choices=['ner', 'ner-ontonotes', 'ner-fast', 'ner-ontonotes-fast'],
+                        default="ner",help="choose ner model")
+    parser.add_argument("--pos", choices=['pos', 'pos-fast'], default="pos", help="choose pos model")
+
+    args = parser.parse_args()
+
+    tagger_ner = SequenceTagger.load(args.ner)
+
+    tagger_pos= SequenceTagger.load(args.pos)
+
     app.run(debug=True, host='0.0.0.0')
     """
+
     # For debugging purposes, load a json file containing the request and process it.
     import json
     with open("predict.json", "rb") as f:
@@ -177,3 +194,7 @@ if __name__ == "__main__":
     request = parse_prediction_request(predict_json)
     predict_pos(request)
     """
+else:
+    tagger_ner = SequenceTagger.load(os.getenv('ner_model'))
+
+    tagger_pos = SequenceTagger.load(os.getenv('pos_model'))

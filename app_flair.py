@@ -16,6 +16,8 @@ from flair.trainers import ModelTrainer
 
 from multiprocessing import Lock
 
+import threading
+
 from sklearn.model_selection import train_test_split
 
 import argparse
@@ -66,19 +68,12 @@ def route_predict_ner():
 
 @app.route("/ner/train", methods=["POST"])
 def route_train_ner():
-    if (lock_ner_train.acquire(block=False)):
-        try:
-            global tagger_ner
-            json_data = request.get_json()
-            train, dev = parse_ner_train_request(json_data)
-            corpus = Corpus( train=train, dev=dev, test="")
-            trainer: ModelTrainer = ModelTrainer(tagger_ner,corpus)
-            trainer.train('model_ner',learning_rate = 0.1, mini_batch_size= 16, max_epochs = 10,
-                          save_final_model=False)
-            tagger_ner = SequenceTagger.load('model_ner/best-model.pt')
-        finally:
-            lock_ner_train.release()
-            return ('', 204)
+    if lock_ner_train.acquire(block=False):
+        json_data = request.get_json()
+        train, dev = parse_ner_train_request(json_data)
+        t1 = threading.Thread(target=train_ner, args=(train, dev))
+        t1.start()
+        return ('', 204)
     else:
         return ('', 429)
 
@@ -90,25 +85,17 @@ def route_predict_pos():
     prediction_response = predict_pos(prediction_request)
 
     result = jsonify(document=prediction_response.document)
-
     return result
 
 
 @app.route("/pos/train", methods=["POST"])
 def route_train_pos():
-    json_data = request.get_json()
-    if lock_pos_train.acquire(block = False):
-        try:
-            global tagger_pos
-            train, dev = parse_pos_train_request(json_data)
-            corpus = Corpus(train=train, dev=dev, test="")
-            trainer: ModelTrainer = ModelTrainer(tagger_pos, corpus)
-            trainer.train('model_pos', learning_rate=0.1, mini_batch_size=16, max_epochs= 10,
-                          save_final_model=False)
-            tagger_pos = SequenceTagger.load('model_pos/best-model.pt')
-        finally:
-            lock_pos_train.release()
-            return ('', 204)
+    if lock_pos_train.acquire(block=False):
+        json_data = request.get_json()
+        train, dev = parse_pos_train_request(json_data)
+        t2 = threading.Thread(target=train_pos, args=(train, dev))
+        t2.start()
+        return ('', 204)
     else:
         return ('', 429)
 
@@ -140,33 +127,33 @@ def parse_ner_train_request(json_object: JsonDict):
         for sentence in sentence_list:
             i = 0
             j = 0
-            token_list = list(cas.select_covered(TOKEN_TYPE,sentence))
+            token_list = list(cas.select_covered(TOKEN_TYPE, sentence))
             ner_list = list(cas.select_covered(NER_TYPE, sentence))
             token_list_len = len(token_list)
             ner_list_len = len(ner_list)
             tokens = []
             flag = False
             while i < token_list_len and j < ner_list_len:
-                if "S-" + ner_list[j].value not in tagset:
+                if ner_list[j].value == None or "S-" + ner_list[j].value not in tagset:
                     flag = True
                     break
                 token = Token(cas.get_covered_text(token_list[i]))
                 if token_list[i].begin == ner_list[j].begin and token_list[i].end == ner_list[j].end:
-                    token.add_tag('ner',"S-" + ner_list[j].value)
+                    token.add_tag('ner', "S-" + ner_list[j].value)
                     i += 1
                     j += 1
                 elif token_list[i].begin == ner_list[j].begin and token_list[i].end < ner_list[j].end:
-                    token.add_tag('ner',"B-" + ner_list[j].value)
+                    token.add_tag('ner', "B-" + ner_list[j].value)
                     i += 1
                 elif token_list[i].begin > ner_list[j].begin and token_list[i].end < ner_list[j].end:
-                    token.add_tag('ner',"I-" + ner_list[j].value)
+                    token.add_tag('ner', "I-" + ner_list[j].value)
                     i += 1
                 elif token_list[i].begin > ner_list[j].begin and token_list[i].end == ner_list[j].end:
-                    token.add_tag('ner',"E-" + ner_list[j].value)
+                    token.add_tag('ner', "E-" + ner_list[j].value)
                     i += 1
                     j += 1
                 else:
-                    token.add_tag('ner','O')
+                    token.add_tag('ner', 'O')
                     i += 1
                 tokens.append(token)
             if flag or ner_list_len == 0:
@@ -179,8 +166,18 @@ def parse_ner_train_request(json_object: JsonDict):
             s = Sentence()
             s.tokens = tokens
             list_sentences.append(s)
-    train, dev, = train_test_split( list_sentences, train_size=0.8)
+    train, dev, = train_test_split(list_sentences, train_size=0.8)
     return train, dev
+
+
+def train_ner(train, dev):
+    global tagger_ner
+    corpus = Corpus(train=train, dev=dev, test="")
+    trainer: ModelTrainer = ModelTrainer(tagger_ner, corpus)
+    trainer.train('model_ner', learning_rate=0.1, mini_batch_size=8, max_epochs=1,
+                  save_final_model=False)
+    tagger_ner = SequenceTagger.load('model_ner/best-model.pt')
+    lock_ner_train.release()
 
 
 def parse_pos_train_request(json_object: JsonDict):
@@ -193,8 +190,8 @@ def parse_pos_train_request(json_object: JsonDict):
         sentence_list = cas.select(SENTENCE_TYPE)
         for sentence in sentence_list:
             tokens = []
-            pos_list = cas.select_covered(POS_TYPE,sentence)
-            token_list = cas.select_covered(TOKEN_TYPE,sentence)
+            pos_list = list(cas.select_covered(POS_TYPE, sentence))
+            token_list = list(cas.select_covered(TOKEN_TYPE, sentence))
             if len(pos_list) != len(token_list):
                 continue
             flag = False
@@ -203,15 +200,25 @@ def parse_pos_train_request(json_object: JsonDict):
                     flag = True
                     break
                 token = Token(cas.get_covered_text(pos))
-                token.add_tag('pos',pos.PosValue)
+                token.add_tag('pos', pos.PosValue)
                 tokens.append(token)
             if flag:
                 continue
             s = Sentence()
             s.tokens = tokens
             list_sentences.append(s)
-    train, dev = train_test_split( list_sentences, train_size=0.8)
+    train, dev = train_test_split(list_sentences, train_size=0.8)
     return train, dev
+
+
+def train_pos(train, dev):
+    global tagger_pos
+    corpus = Corpus(train=train, dev=dev, test="")
+    trainer: ModelTrainer = ModelTrainer(tagger_pos, corpus)
+    trainer.train('model_pos', learning_rate=0.1, mini_batch_size=16, max_epochs=1,
+                  save_final_model=False)
+    tagger_pos = SequenceTagger.load('model_pos/best-model.pt')
+    lock_pos_train.release()
 
 
 # NLP
@@ -246,7 +253,7 @@ def predict_ner(prediction_request: PredictionRequest) -> PredictionResponse:
             fields = {'begin': tokens_cas[start_idx].begin,
                       'end': tokens_cas[end_idx].end,
                       IS_PREDICTION: True,
-                      prediction_request.feature+"_score": ent.score,
+                      prediction_request.feature + "_score": ent.score,
                       prediction_request.feature: ent.tag}
             annotation = AnnotationType(**fields)
             cas.add_annotation(annotation)
@@ -285,7 +292,7 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
                 fields = {'begin': tokens_cas[token.idx].begin,
                           'end': tokens_cas[token.idx].end,
                           IS_PREDICTION: True,
-                          prediction_request.feature+"_score": t.score,
+                          prediction_request.feature + "_score": t.score,
                           prediction_request.feature: t.value}
                 annotation = AnnotationType(**fields)
                 cas.add_annotation(annotation)
@@ -293,19 +300,20 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
     xmi = cas.to_xmi()
     return PredictionResponse(xmi)
 
+
 if __name__ == "__main__":
   
     parser = argparse.ArgumentParser(usage="choose ner and pos models", description="help info.")
 
     parser.add_argument("--ner", choices=['ner', 'ner-ontonotes', 'ner-fast', 'ner-ontonotes-fast'],
-                        default="ner",help="choose ner model")
+                        default="ner", help="choose ner model")
     parser.add_argument("--pos", choices=['pos', 'pos-fast'], default="pos", help="choose pos model")
 
     args = parser.parse_args()
 
     tagger_ner = SequenceTagger.load(args.ner)
 
-    tagger_pos= SequenceTagger.load(args.pos)
+    tagger_pos = SequenceTagger.load(args.pos)
 
     app.run(debug=True, host='0.0.0.0')
     """

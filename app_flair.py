@@ -302,7 +302,7 @@ def predict_pos(prediction_request: PredictionRequest) -> PredictionResponse:
 
 
 if __name__ == "__main__":
-
+  
     parser = argparse.ArgumentParser(usage="choose ner and pos models", description="help info.")
 
     parser.add_argument("--ner", choices=['ner', 'ner-ontonotes', 'ner-fast', 'ner-ontonotes-fast'],

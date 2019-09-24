@@ -8,7 +8,7 @@ from cassis import *
 
 from flair.data import Token, Sentence
 
-from flair.models import SequenceTagger
+from flair.models import SequenceTagger, TextClassifier
 
 from flair.data import Corpus
 
@@ -114,16 +114,31 @@ def route_train_pos():
         return HTTPStatus.TOO_MANY_REQUESTS.description, HTTPStatus.TOO_MANY_REQUESTS.value
 
 
+@app.route("/sentence/predict", methods=["POST"])
+def route_sentence_predict():
+    json_data = request.get_json()
+
+    prediction_request = parse_prediction_request(json_data)
+    prediction_response = predict_sentence(prediction_request)
+
+    result = jsonify(document=prediction_response.document)
+    return result
+
+
 class Model:
-    def __init__(self, ner_model, pos_model):
+    def __init__(self, ner_model, pos_model, sentiment_model):
         self.ner_model = ner_model
         self.pos_model = pos_model
+        self.sentiment_model = sentiment_model
 
     def get_ner_model(self):
         return self.ner_model
 
     def get_pos_model(self):
         return self.pos_model
+
+    def get_sentiment_model(self):
+        return self.sentiment_model
 
 
 def parse_prediction_request(json_object: JsonDict) -> PredictionRequest:
@@ -176,7 +191,6 @@ def flair_train_ner_dataset(cas: Cas) -> List[Sentence]:
         s = Sentence()
         s.tokens = tokens
         list_sentences.append(s)
-
     return list_sentences
 
 
@@ -231,7 +245,6 @@ def flair_train_ner(train: List[Sentence], dev: List[Sentence]):
     # Use a copy of the model for training because during the training the prediction should still work
     # There is no need to set the test set because the training is on train set and evaluation is on development set
     corpus = Corpus(train=train, dev=dev, test="")
-
     tagger_ner_for_train = copy.deepcopy(model.get_ner_model())
     trainer: ModelTrainer = ModelTrainer(tagger_ner_for_train, corpus)
 
@@ -306,7 +319,7 @@ def flair_train_pos_dataset(cas: Cas):
         list_sentences.append(s)
     return list_sentences
 
-
+  
 def flair_train_pos(train: List[Sentence], dev: List[Sentence]):
     # Use a copy of the model for training because during the training the prediction should still work
     # There is no need to set the test set because the training is on train set and evaluation is on development set
@@ -336,6 +349,7 @@ def flair_train_pos(train: List[Sentence], dev: List[Sentence]):
 
     # After the training, the tagger model will be updated into the best model from the training.
     model.pos_model = SequenceTagger.load("model_pos/best-model.pt")
+
     # Release the lock and be able to deal with new training request
     lock_pos_train.release()
 
@@ -363,7 +377,7 @@ def flair_predict_ner(cas, annotationtype, prediction_request):
     for sentence in sentences:
         tokens = [
             Token(cas.get_covered_text(t))
-            for t in list(cas.select_covered(TOKEN_TYPE, sentence))
+            for t in cas.select_covered(TOKEN_TYPE, sentence)
         ]
         for token in tokens:
             token.idx = idx
@@ -411,7 +425,7 @@ def flair_predict_pos(cas, annotationtype, prediction_request):
     for sentence in sentences:
         tokens = [
             Token(cas.get_covered_text(t))
-            for t in list(cas.select_covered(TOKEN_TYPE, sentence))
+            for t in cas.select_covered(TOKEN_TYPE, sentence)
         ]
         for token in tokens:
             token.idx = idx
@@ -439,6 +453,52 @@ def flair_predict_pos(cas, annotationtype, prediction_request):
     return cas
 
 
+def predict_sentence(prediction_request: PredictionRequest) -> PredictionResponse:
+    typesystem = load_typesystem(prediction_request.typeSystem)
+    cas = load_cas_from_xmi(prediction_request.document.xmi, typesystem=typesystem)
+    AnnotationType = typesystem.get_type(prediction_request.layer)
+
+    cas = flair_predict_sentence(cas, AnnotationType, prediction_request)
+    xmi = cas.to_xmi()
+    return PredictionResponse(xmi)
+
+
+def flair_predict_sentence(cas, annotationtype, prediction_request):
+    # Extract the tokens from the CAS and create a flair doc from it
+    tokens_cas = list(cas.select(TOKEN_TYPE))
+    sentences = cas.select(SENTENCE_TYPE)
+    text = []
+    idx = 0
+    for sentence in sentences:
+        tokens = [
+            Token(cas.get_covered_text(t))
+            for t in cas.select_covered(TOKEN_TYPE, sentence)
+        ]
+        for token in tokens:
+            token.idx = idx
+            idx += 1
+        s = Sentence()
+        s.tokens = tokens
+        text.append(s)
+
+    # Find the named entities
+    for sen in text:
+        model.get_sentiment_model().predict(sen)
+        start_idx = sen.tokens[0].idx
+
+        end_idx = sen.tokens[-1].idx
+        fields = {
+            "begin": tokens_cas[start_idx].begin,
+            "end": tokens_cas[end_idx].end,
+            IS_PREDICTION: True,
+            prediction_request.feature: sen.labels[0].value,
+            prediction_request.feature + "_score": sen.labels[0].score
+        }
+        annotation = annotationtype(**fields)
+        cas.add_annotation(annotation)
+    return cas
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         usage="choose ner and pos models", description="help info."
@@ -448,22 +508,29 @@ if __name__ == "__main__":
         "--ner",
         choices=["ner", "ner-ontonotes", "ner-fast", "ner-ontonotes-fast"],
         default="ner",
-        help="choose ner model",
+        help="choose ner model"
     )
     parser.add_argument(
         "--pos", choices=["pos", "pos-fast"], default="pos", help="choose pos model"
     )
 
+    parser.add_argument(
+        "--sentiment",
+        choices=["en-sentiment"],
+        default="en-sentiment",
+        help="choose sentence classifier"
+    )
+
     args = parser.parse_args()
 
-    model = Model(SequenceTagger.load(args.ner),SequenceTagger.load(args.pos))
+    model = Model(SequenceTagger.load(args.ner), SequenceTagger.load(args.pos), TextClassifier.load(args.sentiment))
 
     app.run(debug=True, host="0.0.0.0")
 
 elif "gunicorn" in os.environ.get("SERVER_SOFTWARE", ""):
     # start the application with gunicorn
-    model = Model(SequenceTagger.load(os.getenv("ner_model")),SequenceTagger.load(os.getenv("pos_model")))
+    model = Model(SequenceTagger.load(os.getenv("ner_model")),SequenceTagger.load(os.getenv("pos_model")), TextClassifier.load(os.getenv("sentiment_model")))
 
 else:
     # used in the test case
-    model = Model(SequenceTagger.load('ner'), SequenceTagger.load('pos'))
+    model = Model(SequenceTagger.load('ner'), SequenceTagger.load('pos'), TextClassifier.load('en-sentiment'))

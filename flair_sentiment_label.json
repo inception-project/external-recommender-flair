@@ -1,0 +1,17 @@
+{
+  "name" : "Polarity values",
+  "typeUiName" : null,
+  "description" : null,
+  "language" : null,
+  "type" : null,
+  "type_name" : null,
+  "type_description" : null,
+  "tags" : [ {
+    "tag_name" : "NEGATIVE",
+    "tag_description" : null
+  }, {
+    "tag_name" : "POSITIVE",
+    "tag_description" : null
+  } ],
+  "create_tag" : false
+}

@@ -20,15 +20,31 @@ When the recommender is deployed on a Gunicorn server:
 
 After everything has been set up, the recommender then can be started from the command line by calling
 
-    python app_flair.py --pos ${POS_MODEL_NAME} --ner ${NER_MODEL_NAME}
+    python app_flair.py --pos ${POS_MODEL_NAME} --ner ${NER_MODEL_NAME} --sentiment ${SENTIMENT_CLASSIFIER_MODEL_NAME}
     
-where ${POS_MODEL_NAME} is the name for the POS-tagging model and ${NER_MODEL_NAME} is the name of NER model. A list of pretrained models can be found on the [flair page](https://github.com/zalandoresearch/flair/blob/master/resources/docs/TUTORIAL_2_TAGGING.md).
+where ${POS_MODEL_NAME} is the name of the POS-tagging model, ${NER_MODEL_NAME} is the name of NER model and ${SENTIMENT_CLASSIFIER_MODEL_NAME} is the name of the text classification model. A list of pretrained models can be found on the [flair page](https://github.com/zalandoresearch/flair/blob/master/resources/docs/TUTORIAL_2_TAGGING.md).
 
 When used in production, the recommender can be deployed on an actual application server Gunicorn by calling:
 
     gunicorn app_flair:app -c gunicorn.conf
 
-where gunicorn.conf is the config file. More information about the configuration of Gunicorn can be found on the [Gunicorn page](http://docs.gunicorn.org/en/stable/settings.html#config-file).
+where gunicorn.conf is the config file. The following line of the config file is used to configure the models in Gunicorn:
+
+    raw_env = ["pos_model=${POS_MODEL_NAME}","ner_model=${NER_MODEL_NAME}","sentiment_model=${SENTIMENT_CLASSIFIER_MODEL_NAME}"]
+
+More information about the configuration of Gunicorn can be found on the [Gunicorn page](http://docs.gunicorn.org/en/stable/settings.html#config-file).
+
+For now, the recommender supports the following models:
+ 
+ Name  | Task  | Training Dataset
+ ---- | ----- | ------  
+ 'ner'  | 4-class Named Entity Recognition | Conll-03
+ 'ner-fast'  | 4-class Named Entity Recognition(smaller model) | Conll-03
+ 'ner-ontonotes'  | 18-class Named Entity Recognition | Ontonotes
+ 'ner-ontonotes-fast'  | 18-class Named Entity Recognition(smaller model) | Ontonotes
+ 'pos' | Part-of-Speech Tagging | Ontonotes
+ 'pos-fast' | Part-of-Speech Tagging(smaller model) | Ontonotes
+ 'en-sentiment' | detecting positive and negative sentiment | movie reviews from [IMDB](http://ai.stanford.edu/~amaas/data/sentiment/)
 
 ### Tagset
 

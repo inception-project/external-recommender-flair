@@ -127,9 +127,22 @@ def route_sentence_predict():
 
 class Model:
     def __init__(self, ner_model, pos_model, sentiment_model):
-        self.ner_model = ner_model
-        self.pos_model = pos_model
-        self.sentiment_model = sentiment_model
+        self.ner_model = None
+        self.pos_model = None
+        self.sentiment_model = None
+        if ner_model is None and pos_model is None and sentiment_model is None:
+            # All models are loaded by default
+            self.ner_model = SequenceTagger.load('ner')
+            self.pos_model = SequenceTagger.load('pos')
+            self.sentiment_model = TextClassifier.load('en-sentiment')
+        else:
+            # Load models on demand
+            if ner_model is not None:
+                self.ner_model = SequenceTagger.load(ner_model)
+            if pos_model is not None:
+                self.pos_model = SequenceTagger.load(pos_model)
+            if sentiment_model is not None:
+                self.sentiment_model = TextClassifier.load(sentiment_model)
 
     def get_ner_model(self):
         return self.ner_model
@@ -507,30 +520,49 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ner",
         choices=["ner", "ner-ontonotes", "ner-fast", "ner-ontonotes-fast"],
-        default="ner",
+        nargs='?',
         help="choose ner model"
     )
     parser.add_argument(
-        "--pos", choices=["pos", "pos-fast"], default="pos", help="choose pos model"
+        "--pos",
+        choices=["pos", "pos-fast"],
+        nargs='?',
+        help="choose pos model"
     )
 
     parser.add_argument(
         "--sentiment",
         choices=["en-sentiment"],
-        default="en-sentiment",
+        nargs='?',
         help="choose sentence classifier"
     )
 
     args = parser.parse_args()
 
-    model = Model(SequenceTagger.load(args.ner), SequenceTagger.load(args.pos), TextClassifier.load(args.sentiment))
+    # load the model optionally
+    arg_ner = args.ner
+    arg_pos = args.pos
+    arg_sentiment = args.sentiment
+    model = Model(arg_ner, arg_pos, arg_sentiment)
 
     app.run(debug=True, host="0.0.0.0")
 
 elif "gunicorn" in os.environ.get("SERVER_SOFTWARE", ""):
     # start the application with gunicorn
-    model = Model(SequenceTagger.load(os.getenv("ner_model")),SequenceTagger.load(os.getenv("pos_model")), TextClassifier.load(os.getenv("sentiment_model")))
+    arg_ner = os.getenv("ner_model")
+    arg_pos = os.getenv("pos_model")
+    arg_sentiment = os.getenv("sentiment_model")
+    ner_choice = ["ner", "ner-ontonotes", "ner-fast", "ner-ontonotes-fast"]
+    pos_choice = ["pos", "pos-fast"]
+    sentiment_choice = ["en-sentiment"]
+    if arg_ner not in ner_choice:
+        arg_ner = None
+    if arg_pos not in pos_choice:
+        arg_pos = None
+    if arg_sentiment not in sentiment_choice:
+        arg_sentiment = None
+    model = Model(arg_ner, arg_pos, arg_sentiment)
 
 else:
     # used in the test case
-    model = Model(SequenceTagger.load('ner'), SequenceTagger.load('pos'), TextClassifier.load('en-sentiment'))
+    model = Model('ner', 'pos', 'en-sentiment')

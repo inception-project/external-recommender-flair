@@ -1,0 +1,4 @@
+Flask == 1.0.3
+gunicorn == 19.9.0
+flair == 0.4.2
+dkpro-cassis == 0.2.1

@@ -45,6 +45,16 @@ For now, the recommender supports the following models:
  'pos' | Part-of-Speech Tagging | Ontonotes
  'pos-fast' | Part-of-Speech Tagging(smaller model) | Ontonotes
  'en-sentiment' | detecting positive and negative sentiment | movie reviews from [IMDB](http://ai.stanford.edu/~amaas/data/sentiment/)
+ 
+ In order to simplify the setup, the recommender is also packaged as a docker file. The installation of Docker in different platforms can be found on [Docker page](https://docs.docker.com/install/). With the given Dockerfile you can build a container image by running:
+
+    docker build -t <name_of_container> .
+
+and test your docker image locally by running( add "-d" option if you want to run the container in the background ):
+    
+    docker run -it -p 5000:5000 <name_of_container>
+
+More details about Docker can be found on [Docker Documentation](https://docs.docker.com).
 
 ### Tagset
 
